@@ -1,3 +1,10 @@
+# file: SudokuCNFEncoder.py
+# VUT FIT - [IAM] Logika úkol 1. - Sudoku (harder, bonus)
+# author: Jakub Králik <xkralij00>
+# date: 28.2.2026
+
+# usage: see README.md
+
 import sys
 
 class SudokuCNFEncoder:
