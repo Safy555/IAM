@@ -19,32 +19,46 @@ class SudokuCNFEncoder:
     def add_clause(self, literals: list):
         self.clauses.append(list(literals))
         
-    def add_exactly_one(self, literals: list):
+    def add_atleast_one(self, literals: list):
         self.add_clause(literals)
+        
+    def add_most_one(self, literals: list):
         for i in range(len(literals)):
             for j in range(i + 1, len(literals)):
                 self.add_clause([-literals[i], -literals[j]])
-                
+    
+    def add_exactly_one(self, literals: list):
+        self.add_atleast_one(literals)
+        self.add_most_one(literals)
+    
     def add_filled_cell(self, row: int, col: int, value: int):
         self.add_clause([self.var(row, col, value)])
-        
+    
+    def block_other_values(self, row: int, col: int, value: int):
+        for v in range(1, self.N + 1):
+            if v != value:
+                self.add_clause([-self.var(row, col, v)])
+    
     def encode_cells(self):
         for row in range(1, self.N + 1):
             for col in range(1, self.N + 1):
                 literals = [self.var(row, col, value) for value in range(1 , self.N + 1)]
-                self.add_exactly_one(literals)
+                self.add_atleast_one(literals)
+                self.add_most_one(literals)
                 
     def encode_rows(self):
         for row in range(1, self.N + 1):
             for value in range(1, self.N + 1):
                 literals = [self.var(row, col, value) for col in range(1 , self.N + 1)]
-                self.add_exactly_one(literals)
+                self.add_atleast_one(literals)
+                self.add_most_one(literals)
     
     def encode_cols(self):
         for col in range(1, self.N + 1):
             for value in range(1, self.N + 1):
                 literals = [self.var(row, col, value) for row in range(1 , self.N + 1)]
-                self.add_exactly_one(literals)
+                self.add_atleast_one(literals)
+                self.add_most_one(literals)
                 
     def encode_blocks(self):
         for block_row in range(0, self.N // self.block_size):
@@ -56,7 +70,8 @@ class SudokuCNFEncoder:
                             row = block_row * self.block_size + row_offset
                             col = block_col * self.block_size + col_offset
                             block_cells.append(self.var(row, col, value))
-                    self.add_exactly_one(block_cells)
+                    self.add_atleast_one(block_cells)
+                    self.add_most_one(block_cells)
                     
     def encode_all(self):
         self.encode_cells()
@@ -99,10 +114,14 @@ def main():
     cells = read_cells(sys.stdin)
     
     for row, col, value in cells:
-        encoder.add_filled_cell(row, col, value)
+        encoder.block_other_values(row, col, value)
         
     encoder.encode_all()
     encoder.to_dimacs()
 
 if __name__ == "__main__":
     main()
+
+
+
+# 12006 lines -> add_exactly_one()
